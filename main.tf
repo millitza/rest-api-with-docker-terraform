@@ -64,7 +64,7 @@ resource "azurerm_container_group" "ctg" {
 
   container {
     name   = "weatherapi"
-    image  = "perlh/weatherapi"
+    image  = "perlh/weatherapi:latest"
     cpu    = "1"
     memory = "1"
 
