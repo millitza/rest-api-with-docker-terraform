@@ -53,13 +53,17 @@ resource "azurerm_linux_web_app" "webapp" {
   }
 }
 
+// doesn't use docker hub anymore, instead pulls from the images in the resource group's private image registry
+
 resource "azurerm_container_registry" "acr" {
-  name                = "ContainerRegistry"
+  name                = "nameofcontainerregistry"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   sku                 = "Basic"
-  admin_enabled       = false
+  admin_enabled       = true
 }
+
+
 
 resource "azurerm_container_group" "ctg" {
   name                = "notesapp"
@@ -70,9 +74,15 @@ resource "azurerm_container_group" "ctg" {
   dns_name_label  = "perlhwa"
   os_type         = "Linux"
 
+  image_registry_credential {
+    username = "yourregistryusername"
+    password = "yourregistrypassword"
+    server = "yourregistryserver"
+  }
+
   container {
     name   = "notesapp-container"
-    image  = "perlh/weatherapi:latest"
+    image  = "containernameinazure.azurecr.io/somefolder/someimage"
     cpu    = "1"
     memory = "1"
 
