@@ -1,0 +1,10 @@
+#Build an image
+docker build -t perlh/TheNameOfTheRepositoryTheImageWillBePutIn .
+
+#Run an image
+docker run -p nnnn:nn imagetopull  #some external port like 8080 and the port the docker container exposes, like 80. If the image isn't present locally, it will be pulled.
+- example
+    docker run -p 8080:8080 docker.io/perlh/weatherapi
+
+#Pull an image
+docker pull perlh/weatherapi:latest
