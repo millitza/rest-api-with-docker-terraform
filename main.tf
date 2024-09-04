@@ -52,3 +52,26 @@ resource "azurerm_linux_web_app" "webapp" {
     environment = "dev"
   }
 }
+
+resource "azurerm_container_group" "ctg" {
+  name                = "notesapp"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  ip_address_type = "Public"
+  dns_name_label  = "perlhwa"
+  os_type         = "Linux"
+
+  container {
+    name   = "weatherapi"
+    image  = "perlh/weatherapi"
+    cpu    = "1"
+    memory = "1"
+
+    ports {
+      port     = 80
+      protocol = "TCP"
+
+    }
+  }
+}
