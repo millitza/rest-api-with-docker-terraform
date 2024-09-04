@@ -63,7 +63,7 @@ resource "azurerm_container_group" "ctg" {
   os_type         = "Linux"
 
   container {
-    name   = "weatherapi"
+    name   = "notesapp-container"
     image  = "perlh/weatherapi:latest"
     cpu    = "1"
     memory = "1"
