@@ -28,6 +28,9 @@ msbuild.log
 msbuild.err
 msbuild.wrn
 
+#ignore terraform statefile
+ .terraform.lock.hcl
+
 # Visual Studio 2015
 .vs/
 
