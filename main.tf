@@ -45,11 +45,31 @@ resource "azurerm_container_registry" "acr" {
   admin_enabled       = true
 }
 
-resource "docker_image" "nginx" {
-  name         = "nginx:latest"
-  keep_locally = false
+resource "azurerm_container_registry_scope_map" "push_repo_scope_map" {
+  container_registry_name = azurerm_container_registry.acr.name
+  name = "acr-scope-map"
+  resource_group_name = azurerm_resource_group.rg.name
+  actions = [ "repositories/notesapp/content/read", "repositories/notesapp/content/write" ]
 }
 
+resource "azurerm_container_registry_token" "pushtoken" {
+  container_registry_name = azurerm_container_registry.acr.name
+  name = "acrpushtoken"
+  resource_group_name = azurerm_resource_group.rg.name
+  scope_map_id = azurerm_container_registry_scope_map.push_repo_scope_map.id
+}
+
+resource "time_rotating" "push_token_rotation" {
+  rotation_days = 7
+}
+
+resource "azurerm_container_registry_token_password" "pushtokenpassword" {
+  container_registry_token_id = azurerm_container_registry_token.pushtoken.id
+
+  password1 {
+    expiry = time_rotating.push_token_rotation.rotation_rfc3339
+  }
+}
 
 resource "docker_image" "apiimage" {
   name = "notesapp"
@@ -67,6 +87,10 @@ resource "docker_image" "apiimage" {
 }
 
  resource "null_resource" "docker_push" {
+
+  provisioner "local-exec" {
+    command = "docker login -u ${azurerm_container_registry_token.pushtoken.name} -p ${azurerm_container_registry_token_password.pushtokenpassword.password1[0].value} https://${azurerm_container_registry.acr.login_server}"
+  }
       provisioner "local-exec" {
       command = <<-EOT
         docker push "${azurerm_container_registry.acr.login_server}/notesapp:dev"
