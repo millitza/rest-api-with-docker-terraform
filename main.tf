@@ -5,19 +5,18 @@ terraform {
       version = "~> 4.0.0"
     }
     docker = {
-        source = "kreuzwerker/docker"
-        version = "~> 3.0.2"
+      source  = "kreuzwerker/docker"
+      version = "~> 3.0.2"
     }
   }
   required_version = ">= 0.14.9"
 }
 
 provider "docker" {
-    host    = "npipe:////./pipe/dockerDesktopLinuxEngine"
 }
 
 provider "azurerm" {
-  subscription_id = "azuresubid"
+  subscription_id = "azure-subscription-id"
   features {
 
   }
@@ -47,16 +46,16 @@ resource "azurerm_container_registry" "acr" {
 
 resource "azurerm_container_registry_scope_map" "push_repo_scope_map" {
   container_registry_name = azurerm_container_registry.acr.name
-  name = "acr-scope-map"
-  resource_group_name = azurerm_resource_group.rg.name
-  actions = [ "repositories/notesapp/content/read", "repositories/notesapp/content/write" ]
+  name                    = "acr-scope-map"
+  resource_group_name     = azurerm_resource_group.rg.name
+  actions                 = ["repositories/notesapp/content/read", "repositories/notesapp/content/write"]
 }
 
 resource "azurerm_container_registry_token" "pushtoken" {
   container_registry_name = azurerm_container_registry.acr.name
-  name = "acrpushtoken"
-  resource_group_name = azurerm_resource_group.rg.name
-  scope_map_id = azurerm_container_registry_scope_map.push_repo_scope_map.id
+  name                    = "acrpushtoken"
+  resource_group_name     = azurerm_resource_group.rg.name
+  scope_map_id            = azurerm_container_registry_scope_map.push_repo_scope_map.id
 }
 
 resource "time_rotating" "push_token_rotation" {
@@ -74,8 +73,8 @@ resource "azurerm_container_registry_token_password" "pushtokenpassword" {
 resource "docker_image" "apiimage" {
   name = "notesapp"
   build {
-    context = "."
-    tag     = ["${azurerm_container_registry.acr.login_server}/notesapp:dev"]
+    context    = "."
+    tag        = ["${azurerm_container_registry.acr.login_server}/notesapp:dev"]
     dockerfile = "./Dockerfile"
     build_arg = {
       environment : "dev"
@@ -86,26 +85,26 @@ resource "docker_image" "apiimage" {
   }
 }
 
- resource "null_resource" "docker_push" {
+resource "null_resource" "docker_push" {
 
   provisioner "local-exec" {
     command = "docker login -u ${azurerm_container_registry_token.pushtoken.name} -p ${azurerm_container_registry_token_password.pushtokenpassword.password1[0].value} https://${azurerm_container_registry.acr.login_server}"
   }
-      provisioner "local-exec" {
-      command = <<-EOT
+  provisioner "local-exec" {
+    command = <<-EOT
         docker push "${azurerm_container_registry.acr.login_server}/notesapp:dev"
       EOT
-      }
-      depends_on = [ 
-        docker_image.apiimage
-       ]
-    }
+  }
+  depends_on = [
+    docker_image.apiimage
+  ]
+}
 
 resource "azurerm_container_app_environment" "contappenv" {
   name                = "container-app-env"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  
+
 }
 
 resource "azurerm_container_app" "example" {
@@ -147,9 +146,9 @@ resource "azurerm_container_app" "example" {
   }
 
   // image should be pushed and available in acr before container is made
-  depends_on = [ 
+  depends_on = [
     null_resource.docker_push
-   ]
+  ]
 
 }
 
