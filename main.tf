@@ -123,6 +123,18 @@ resource "azurerm_container_app" "example" {
     }
   }
 
+  identity {
+    type = "UserAssigned"
+    identity_ids = [
+      azurerm_user_assigned_identity.container_app_uai.id
+    ]
+  }
+
+  registry {
+    server   = azurerm_container_registry.acr.login_server
+    identity = azurerm_user_assigned_identity.container_app_uai.id
+  }
+
   // image should be pushed and available in acr before container is made
   depends_on = [ 
     null_resource.docker_push
@@ -130,7 +142,17 @@ resource "azurerm_container_app" "example" {
 
 }
 
+resource "azurerm_user_assigned_identity" "container_app_uai" {
+  location            = azurerm_resource_group.rg.location
+  name                = "notesapp-aca-uai"
+  resource_group_name = azurerm_resource_group.rg.name
+}
 
+resource "azurerm_role_assignment" "container_app_read_acr" {
+  scope                = azurerm_resource_group.rg.id
+  role_definition_name = "acrPull"
+  principal_id         = azurerm_user_assigned_identity.container_app_uai.principal_id
+}
 
 
 
