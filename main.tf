@@ -135,6 +135,17 @@ resource "azurerm_container_app" "example" {
     identity = azurerm_user_assigned_identity.container_app_uai.id
   }
 
+  ingress {
+    allow_insecure_connections = false
+    external_enabled           = true
+    target_port                = 8000
+
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
+  }
+
   // image should be pushed and available in acr before container is made
   depends_on = [ 
     null_resource.docker_push
